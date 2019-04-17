@@ -13,6 +13,7 @@ public:
   Controller(): m_face(m_ioService), m_scheduler(m_ioService){}
 
   void run(){
+    Interest::setDefaultCanBePrefix(true);
     restart();
     m_ioService.run();
   }
@@ -20,8 +21,9 @@ public:
 private:
   void after10sec(){
     std::cout << "Start a new loop." << std::endl;
-    Interest interest("/room/temp/1");
+    Interest interest("/room/temp");
     interest.setMustBeFresh(true);
+    interest.setCanBePrefix(true);
     m_face.expressInterest(interest,
                            bind(&Controller::afterGetTemperature, this, _2),
                            bind([this]{ restart(); }),
@@ -49,7 +51,8 @@ private:
     std::cout << "State: " << aircon_state << std::endl;
     std::cout << "Action: " << action << std::endl;
     if(action != "none"){
-      m_face.expressInterest(Interest(aircon_command.append(action)).setMustBeFresh(true),
+      auto interest = Interest(aircon_command.append(action)).setMustBeFresh(true);
+      m_face.expressInterest(interest,
                              DataCallback(),
                              NackCallback(),
                              TimeoutCallback());
@@ -58,8 +61,8 @@ private:
   }
 
   void restart(){
-    std::cout << "Start to wait 10s..." << std::endl;
-    m_scheduler.scheduleEvent(10_s, bind(&Controller::after10sec, this));
+    std::cout << "Start to wait 5s..." << std::endl;
+    m_scheduler.scheduleEvent(5_s, bind(&Controller::after10sec, this));
   }
 
 private:

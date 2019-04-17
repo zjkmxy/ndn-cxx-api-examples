@@ -14,7 +14,8 @@ public:
 
   void run(std::string filename, std::string sensor_id){
     m_file.open(filename);
-    m_face.setInterestFilter(Name("/room/temp").append(sensor_id),
+    m_sensor_id = sensor_id;
+    m_face.setInterestFilter("/room/temp",
                              std::bind(&TempSensor::onInterest, this, _2),
                              RegisterPrefixSuccessCallback(),
                              bind(&TempSensor::onRegisterFailed, this, _1, _2));
@@ -29,7 +30,7 @@ private:
       m_file.seekg(std::ios_base::beg);
       m_file >> temperature;
     }
-    Data data(interest.getName());
+    Data data(Name("/room/temp").append(m_sensor_id).appendTimestamp());
     data.setFreshnessPeriod(10_ms);
     data.setContent(reinterpret_cast<uint8_t*>(&temperature), sizeof(temperature));
     m_keyChain.sign(data);
@@ -51,6 +52,7 @@ private:
   Face m_face;
   KeyChain m_keyChain;
   std::fstream m_file;
+  std::string m_sensor_id;
 };
 
 int main(int argc, char* argv[]){

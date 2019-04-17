@@ -27,7 +27,7 @@ public:
 
 private:
   void onInterest(const Interest& interest){
-    Data data(interest.getName());
+    Data data(Name(interest.getName()).appendTimestamp());
     data.setFreshnessPeriod(10_ms);
     data.setContent(reinterpret_cast<const uint8_t*>(m_state.c_str()), m_state.length() + 1);
     m_keyChain.sign(data);
