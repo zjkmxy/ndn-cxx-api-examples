@@ -3,6 +3,11 @@
 #endif
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
+#include <ndn-cxx/security/verification-helpers.hpp>
+#include <ndn-cxx/security/validator-config.hpp>
+#include <ndn-cxx/security/v2/validator.hpp>
+#include <ndn-cxx/security/v2/validation-callback.hpp>
+#include <ndn-cxx/security/v2/certificate-fetcher-offline.hpp>
 #include <boost/asio/io_service.hpp>
 #include <iostream>
 #include <functional>
@@ -31,6 +36,28 @@ private:
   }
 
   void afterGetTemperature(const Data& data){
+    // Approach 1: directly use cert to verify
+    const auto& pib = m_keyChain.getPib();
+    const auto& identity = pib.getDefaultIdentity();
+    const auto& key = identity.getDefaultKey();
+    const auto& cert = key.getDefaultCertificate();
+    if (security::verifySignature(data, cert)) {
+      std::cout << "NICE. Replied Data has a valid signature" << std::endl;
+    }
+
+    // Approach 2: use validator config (trust schema)
+    namespace ndnsec = ndn::security::v2;
+    security::v2::Validator validator(make_unique<ndnsec::ValidationPolicyConfig>(), make_unique<ndnsec::CertificateFetcherOffline>());
+    auto& config = static_cast<ndnsec::ValidationPolicyConfig&>(validator.getPolicy());
+    config.load("home.conf");
+    validator.validate(data,
+    [](auto data) {
+      std::cout << "ValidatorConfig::NICE. Replied Data has a valid signature" << std::endl;
+    },
+    [](auto data, auto error) {
+      std::cout << "Error is " << error.getInfo() << std::endl;
+    });
+
     int temperature = *reinterpret_cast<const int*>(data.getContent().value());
     std::cout << "Temperature: " << temperature << std::endl;
     m_face.expressInterest(Interest("/room/aircon/state").setMustBeFresh(true),
@@ -67,6 +94,7 @@ private:
 
 private:
   boost::asio::io_service m_ioService;
+  KeyChain m_keyChain;
   Face m_face;
   Scheduler m_scheduler;
 };
