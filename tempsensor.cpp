@@ -3,6 +3,7 @@
 #endif
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/signing-helpers.hpp>
+#include <ndn-cxx/security/verification-helpers.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -26,6 +27,16 @@ public:
 
 private:
   void onInterest(const Interest& interest){
+    const auto& pib = m_keyChain.getPib();
+    const auto& identity = pib.getIdentity(Name("/zhiyi"));
+    if (security::verifySignature(interest, identity.getDefaultKey())) {
+      std::cout << "COOL. Controller's Interest get verified" << std::endl;
+    }
+    else {
+      std::cout << "Oops. Interest's sig is invalid" << std::endl;
+    }
+
+
     int temperature;
     if(!(m_file >> temperature)){
       m_file.seekg(std::ios_base::beg);
@@ -35,8 +46,6 @@ private:
     data.setFreshnessPeriod(10_ms);
     data.setContent(reinterpret_cast<uint8_t*>(&temperature), sizeof(temperature));
     // signed with an identity/key/cert
-    const auto& pib = m_keyChain.getPib();
-    const auto& identity = pib.getIdentity(Name("/zhiyi"));
     m_keyChain.sign(data, security::signingByIdentity(identity));
 
     std::cout << "Name: " << interest.getName().toUri() 

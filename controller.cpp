@@ -4,6 +4,7 @@
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
 #include <ndn-cxx/security/verification-helpers.hpp>
+#include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/security/validator-config.hpp>
 #include <ndn-cxx/security/v2/validator.hpp>
 #include <ndn-cxx/security/v2/validation-callback.hpp>
@@ -29,6 +30,11 @@ private:
     Interest interest("/room/temp");
     interest.setMustBeFresh(true);
     interest.setCanBePrefix(true);
+
+    // sign the Interest
+    const auto& identity = m_keyChain.getPib().getIdentity(Name("/zhiyi"));
+    m_keyChain.sign(interest, security::signingByIdentity(identity));
+
     m_face.expressInterest(interest,
                            bind(&Controller::afterGetTemperature, this, _2),
                            bind([this]{ restart(); }),
