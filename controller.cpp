@@ -95,7 +95,7 @@ private:
 
   void restart(){
     std::cout << "Start to wait 5s..." << std::endl;
-    m_scheduler.scheduleEvent(5_s, bind(&Controller::after10sec, this));
+    m_scheduler.schedule(5_s, bind(&Controller::after10sec, this));
   }
 
 private:
