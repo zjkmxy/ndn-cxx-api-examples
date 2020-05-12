@@ -42,7 +42,7 @@ private:
       m_file.seekg(std::ios_base::beg);
       m_file >> temperature;
     }
-    Data data(Name("/room/temp").append(m_sensor_id).appendTimestamp());
+    Data data(interest.getName());
     data.setFreshnessPeriod(10_ms);
     data.setContent(reinterpret_cast<uint8_t*>(&temperature), sizeof(temperature));
     // signed with an identity/key/cert
