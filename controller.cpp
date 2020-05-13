@@ -29,7 +29,7 @@ private:
     std::cout << "Start a new loop." << std::endl;
     Interest interest("/room/temp");
     interest.setMustBeFresh(true);
-    interest.setCanBePrefix(true);
+    interest.setCanBePrefix(false);
 
     // sign the Interest
     const auto& identity = m_keyChain.getPib().getIdentity(Name("/zhiyi"));
@@ -52,17 +52,17 @@ private:
     }
 
     // Approach 2: use validator config (trust schema)
-    namespace ndnsec = ndn::security::v2;
-    security::v2::Validator validator(make_unique<ndnsec::ValidationPolicyConfig>(), make_unique<ndnsec::CertificateFetcherOffline>());
-    auto& config = static_cast<ndnsec::ValidationPolicyConfig&>(validator.getPolicy());
-    config.load("home.conf");
-    validator.validate(data,
-    [](auto data) {
-      std::cout << "ValidatorConfig::NICE. Replied Data has a valid signature" << std::endl;
-    },
-    [](auto data, auto error) {
-      std::cout << "Error is " << error.getInfo() << std::endl;
-    });
+    // namespace ndnsec = ndn::security::v2;
+    // security::v2::Validator validator(make_unique<ndnsec::ValidationPolicyConfig>(), make_unique<ndnsec::CertificateFetcherOffline>());
+    // auto& config = static_cast<ndnsec::ValidationPolicyConfig&>(validator.getPolicy());
+    // config.load("home.conf");
+    // validator.validate(data,
+    // [](auto data) {
+    //   std::cout << "ValidatorConfig::NICE. Replied Data has a valid signature" << std::endl;
+    // },
+    // [](auto data, auto error) {
+    //   std::cout << "Error is " << error.getInfo() << std::endl;
+    // });
 
     int temperature = *reinterpret_cast<const int*>(data.getContent().value());
     std::cout << "Temperature: " << temperature << std::endl;
